@@ -94,20 +94,20 @@ INSERT INTO Cita (Fecha_Hora,Estado,ID_Mascota,Rut_Veterinario) VALUES ('2026-10
 INSERT INTO Detalle_Venta VALUES (1,999,1,5000);
 
 -- RESTRICT al borrar (esperado: ERROR 1451)
--- P4
-DELETE FROM Cliente WHERE Rut_Cliente = '11111111-1';
--- P5
-DELETE FROM Veterinario WHERE Rut_Veterinario = '15111111-1';
+-- P4 (esperado: ERROR 1451)
+DELETE FROM Cliente WHERE Rut_Cliente = '15.420.311-8';
+-- P5 (esperado: ERROR 1451)
+DELETE FROM Veterinario WHERE Rut_Veterinario = '14.890.123-4';
 -- P6
 DELETE FROM Producto WHERE ID_Producto = 1;
 
 -- UNIQUE (esperado: ERROR 1062)
 -- P7
-INSERT INTO Ficha_Medica (Diagnostico,Fecha_Registro,N_Cita,Rut_Veterinario) VALUES ('Segunda ficha','2026-10-20',1,'15111111-1');
+INSERT INTO Ficha_Medica (Diagnostico,Fecha_Registro,N_Cita,Rut_Veterinario) VALUES ('Segunda ficha','2026-10-10',1,'14.890.123-4');
 
 -- CHECK (esperado en todos: ERROR 3819)
 -- P8  chk_mascota_sexo
-INSERT INTO Mascota (Nombre,Sexo,Rut_Cliente) VALUES ('Test','X','11111111-1');
+INSERT INTO Mascota (Nombre,Sexo,Rut_Cliente) VALUES ('Test','X','15.420.311-8');
 -- P9  chk_prestacion_precio
 INSERT INTO Prestacion (Nombre_Prestacion,Precio) VALUES ('Test',-1);
 -- P10 chk_prestacion_duracion
@@ -117,7 +117,7 @@ INSERT INTO Producto (Nombre_Producto,Precio_Unitario,Stock) VALUES ('Test',-1,5
 -- P12 chk_producto_stock
 INSERT INTO Producto (Nombre_Producto,Precio_Unitario,Stock) VALUES ('Test',1000,-1);
 -- P13 chk_cita_estado
-INSERT INTO Cita (Fecha_Hora,Estado,ID_Mascota,Rut_Veterinario) VALUES ('2026-10-25 10:00:00','cancelada',1,'15111111-1');
+INSERT INTO Cita (Fecha_Hora,Estado,ID_Mascota,Rut_Veterinario) VALUES ('2026-10-25 10:00:00','anulada',1,'14.890.123-4');
 -- P14 chk_venta_monto
 INSERT INTO Venta (Fecha_Pago,Monto_Venta,Rut_Cajero) VALUES ('2026-10-22',-1,'16111111-1');
 -- P15 chk_inventario_tipo
@@ -137,48 +137,78 @@ INSERT INTO Detalle_Prestacion VALUES (100,2,1,20000,-1);
 
 -- NOT NULL
 -- P22 (esperado: ERROR 1048)
-INSERT INTO Mascota (Nombre,Rut_Cliente) VALUES (NULL,'11111111-1');
+INSERT INTO Mascota (Nombre,Rut_Cliente) VALUES (NULL,'15.420.311-8');
 -- P23 (esperado: ERROR 1364)
-INSERT INTO Mascota (Especie,Rut_Cliente) VALUES ('Canino','11111111-1');
+INSERT INTO Mascota (Especie,Rut_Cliente) VALUES ('Canino','15.420.311-8');
 
 -- paso 4:
-INSERT INTO Cita (Fecha_Hora,ID_Mascota,Rut_Veterinario) VALUES ('2026-10-26 15:00:00',2,'15222222-2');
+INSERT INTO Cita (Fecha_Hora,ID_Mascota,Rut_Veterinario) VALUES ('2026-10-26 15:00:00',2,'16.234.567-8');
 INSERT INTO Producto (Nombre_Producto,Precio_Unitario) VALUES ('Juguete de goma',3000);
 SELECT N_Cita, Estado FROM Cita ORDER BY N_Cita DESC LIMIT 1;
 SELECT ID_Producto, Nombre_Producto, Stock FROM Producto ORDER BY ID_Producto DESC LIMIT 1;
 
--- Paso 5: Limitaciones
--- Subtotal incorrecto aceptado
+-- Paso 5: Limitaciones 
+-- Subtotal incorrecto aceptado L1
 INSERT INTO Detalle_Venta VALUES (100,3,2,1);
 
--- Ficha firmada por un veterinario distinto al de la cita
+-- L2 Ficha firmada por un veterinario distinto al de la cita (la cita 100 es del Dr. Navarro)
 INSERT INTO Ficha_Medica (Diagnostico,Fecha_Registro,N_Cita,Rut_Veterinario)
-VALUES ('Ficha de otro vet','2026-10-21',3,'15222222-2');
+VALUES ('Ficha de otro vet','2026-10-12',100,'14.890.123-4');
 
 -- Salida de inventario que no descuenta el Stock
 INSERT INTO Inventario (ID_Producto,Tipo_Movimiento,Cantidad,Fecha_Movimiento)
 VALUES (3,'salida',5,'2026-10-22 12:00:00');
 SELECT Stock FROM Producto WHERE ID_Producto = 3;
 
--- Dos citas del mismo veterinario a la misma hora
+-- P24 (antes era la limitación "dos citas a la misma hora") (esperado: ERROR 1062, key 'Cita.uq_cita_vet_bloque')
 INSERT INTO Cita (Fecha_Hora,Estado,ID_Mascota,Rut_Veterinario)
-VALUES ('2026-10-20 10:00:00','pendiente',3,'15111111-1');
-SELECT COUNT(*) AS citas_misma_hora FROM Cita
-WHERE Rut_Veterinario='15111111-1' AND Fecha_Hora='2026-10-20 10:00:00';
+VALUES ('2026-10-10 10:00:00','pendiente',3,'14.890.123-4');
+
+-- P25 una cita cancelada libera el bloque
+-- (a) OK
+INSERT INTO Cita (Fecha_Hora,Estado,ID_Mascota,Rut_Veterinario)
+VALUES ('2026-10-27 10:00:00','pendiente',3,'14.890.123-4');
+-- (b) ERROR 1062: el bloque está ocupado
+INSERT INTO Cita (Fecha_Hora,Estado,ID_Mascota,Rut_Veterinario)
+VALUES ('2026-10-27 10:00:00','pendiente',2,'14.890.123-4');
+-- (c) cancelar la cita de (a)
+UPDATE Cita SET Estado='cancelada'
+WHERE Rut_Veterinario='14.890.123-4' AND Fecha_Hora='2026-10-27 10:00:00';
+-- (d) ahora se acepta
+INSERT INTO Cita (Fecha_Hora,Estado,ID_Mascota,Rut_Veterinario)
+VALUES ('2026-10-27 10:00:00','pendiente',2,'14.890.123-4');
+SELECT N_Cita, Estado, Bloque_Activo FROM Cita
+WHERE Rut_Veterinario='14.890.123-4' AND Fecha_Hora='2026-10-27 10:00:00';
+
+-- P26 (esperado: ERROR 1452)
+INSERT INTO Historial_Responsable (ID_Mascota,Rut_Cliente,Fecha_Inicio) VALUES (999,'15.420.311-8','2026-01-01');
+-- P27 (esperado: ERROR 1452)
+INSERT INTO Historial_Responsable (ID_Mascota,Rut_Cliente,Fecha_Inicio) VALUES (1,'99.999.999-9','2026-01-01');
+-- P28 (esperado: ERROR 3819, chk_hist_fechas)
+INSERT INTO Historial_Responsable (ID_Mascota,Rut_Cliente,Fecha_Inicio,Fecha_Fin) VALUES (1,'15.420.311-8','2026-05-01','2026-04-01');
+-- P29 borde positivo, Fecha_Fin = Fecha_Inicio (debe aceptarse)
+INSERT INTO Historial_Responsable (ID_Mascota,Rut_Cliente,Fecha_Inicio,Fecha_Fin) VALUES (2,'15.420.311-8','2022-06-15','2022-06-15');
+SELECT * FROM Historial_Responsable;
 
 -- Paso 6 
 -- Paso 6.1 ON UPDATE CASCADE
 SELECT Nombre, Rut_Cliente FROM Mascota;
 SELECT ID_Venta, Rut_Cliente FROM Venta;
-UPDATE Cliente SET Rut_Cliente = '11111111-9' WHERE Rut_Cliente = '11111111-1';
+SELECT ID_Historial, ID_Mascota, Rut_Cliente FROM Historial_Responsable;
+UPDATE Cliente SET Rut_Cliente = '15.420.311-9' WHERE Rut_Cliente = '15.420.311-8';
+SELECT Nombre, Rut_Cliente FROM Mascota;
+SELECT ID_Venta, Rut_Cliente FROM Venta;
+SELECT ID_Historial, ID_Mascota, Rut_Cliente FROM Historial_Responsable;
 -- 6.2 ON DELETE SET NULL (cliente)
 -- El SELECT siguiente muestra el resultado del 6.1 y el estado 'antes' del 6.2
 SELECT ID_Venta, Rut_Cliente FROM Venta;
-DELETE FROM Cliente WHERE Rut_Cliente = '33333333-3';
+DELETE FROM Cliente WHERE Rut_Cliente = '11.111.111-1';
 SELECT ID_Venta, Rut_Cliente FROM Venta;
 -- 6.3 ON DELETE SET NULL (proveedor)
 SELECT ID_Producto, Nombre_Producto, Rut_Proveedor FROM Producto;
 SELECT ID_Movimiento, ID_Producto, Tipo_Movimiento, Rut_Proveedor FROM Inventario;
-DELETE FROM Proveedor WHERE Rut_Proveedor = '76111111-1';
+DELETE FROM Proveedor WHERE Rut_Proveedor = '76.123.456-0';
 SELECT ID_Producto, Nombre_Producto, Rut_Proveedor FROM Producto;
 SELECT ID_Movimiento, ID_Producto, Tipo_Movimiento, Rut_Proveedor FROM Inventario;
+
+
