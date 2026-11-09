@@ -54,3 +54,12 @@ INSERT INTO Detalle_Prestacion (ID_Venta, ID_Prestacion, Cantidad, Precio_Aplica
 (1, 1, 1, 20000.00, 20000.00), 
 (2, 2, 1, 18000.00, 18000.00), 
 (3, 3, 1, 45000.00, 45000.00);
+
+-- Historial de responsables: 3 registros de prueba.
+INSERT INTO Historial_Responsable
+(ID_Historial, ID_Mascota, Rut_Cliente, Fecha_Inicio, Fecha_Fin)
+VALUES
+(1, 1, '15.420.311-8', '2021-04-15', NULL),
+(2, 2, '18.734.902-5', '2022-08-10', NULL),
+(3, 3, '12.658.120-K', '2020-11-05', NULL);
+
