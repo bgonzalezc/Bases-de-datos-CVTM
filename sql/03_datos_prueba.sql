@@ -1,4 +1,4 @@
--- CVTM | Datos de prueba base (3 filas por tabla, 39 en total) | MySQL 8.0
+-- CVTM | Datos de prueba base (3 filas por tabla, 42 en total) | MySQL 8.0
 -- Ejecutar después de 01 y 02, sobre una base recién creada.
 
 USE veterinaria_db;
