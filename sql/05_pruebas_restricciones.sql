@@ -26,6 +26,14 @@ INSERT INTO Mascota (Nombre,Especie,Raza,Fecha_Nacimiento,Sexo,Rut_Cliente) VALU
  ('Michi','Felino','Siamés','2022-06-15','H','22222222-2'),
  ('Rocky','Canino','Labrador','2020-01-20','M','11111111-1');
 
+-- Historial de responsables
+INSERT INTO Historial_Responsable
+(ID_Historial, ID_Mascota, Rut_Cliente, Fecha_Inicio, Fecha_Fin)
+VALUES
+(1, 1, '11111111-1', '2021-04-15', NULL),
+(2, 2, '22222222-2', '2022-08-10', NULL),
+(3, 3, '11111111-1', '2020-11-05', NULL);
+
 INSERT INTO Prestacion (Nombre_Prestacion,Descripcion,Precio,Duracion_Min) VALUES
  ('Vacuna antirrábica','Vacunación anual',15000,30),
  ('Consulta general','Control de rutina',20000,20);
