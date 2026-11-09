@@ -126,7 +126,8 @@ INSERT INTO Producto (Nombre_Producto,Precio_Unitario,Stock) VALUES ('Test',-1,5
 -- P12 chk_producto_stock
 INSERT INTO Producto (Nombre_Producto,Precio_Unitario,Stock) VALUES ('Test',1000,-1);
 -- P13 chk_cita_estado
-INSERT INTO Cita (Fecha_Hora,Estado,ID_Mascota,Rut_Veterinario) VALUES ('2026-10-25 10:00:00','cancelada',1,'15111111-1');
+INSERT INTO Cita (Fecha_Hora,Estado,ID_Mascota,Rut_Veterinario)
+VALUES ('2026-10-25 10:00:00','en_revision',1,'15111111-1');
 -- P14 chk_venta_monto
 INSERT INTO Venta (Fecha_Pago,Monto_Venta,Rut_Cajero) VALUES ('2026-10-22',-1,'16111111-1');
 -- P15 chk_inventario_tipo
@@ -169,11 +170,11 @@ INSERT INTO Inventario (ID_Producto,Tipo_Movimiento,Cantidad,Fecha_Movimiento)
 VALUES (3,'salida',5,'2026-10-22 12:00:00');
 SELECT Stock FROM Producto WHERE ID_Producto = 3;
 
--- Dos citas del mismo veterinario a la misma hora
+-- Restricción UNIQUE: no permite dos citas activas
+-- del mismo veterinario en el mismo horario.
+-- Resultado esperado: ERROR 1062.
 INSERT INTO Cita (Fecha_Hora,Estado,ID_Mascota,Rut_Veterinario)
 VALUES ('2026-10-20 10:00:00','pendiente',3,'15111111-1');
-SELECT COUNT(*) AS citas_misma_hora FROM Cita
-WHERE Rut_Veterinario='15111111-1' AND Fecha_Hora='2026-10-20 10:00:00';
 
 -- Paso 6 
 -- Paso 6.1 ON UPDATE CASCADE
