@@ -83,7 +83,7 @@ UNION ALL SELECT 'Ficha_Medica', COUNT(*) FROM Ficha_Medica
 UNION ALL SELECT 'Inventario', COUNT(*) FROM Inventario
 UNION ALL SELECT 'Detalle_Venta', COUNT(*) FROM Detalle_Venta
 UNION ALL SELECT 'Detalle_Prestacion', COUNT(*) FROM Detalle_Prestacion
-UNION ALL SELECT 'Historial_Responsable', COUNT(*) FROM Historial_Responsable;;
+UNION ALL SELECT 'Historial_Responsable', COUNT(*) FROM Historial_Responsable;
 
 SELECT c.Nombre AS Dueno, m.Nombre AS Mascota, ci.Fecha_Hora, ci.Estado,
        v.Nombre AS Veterinario, f.Diagnostico
